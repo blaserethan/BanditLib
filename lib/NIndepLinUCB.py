@@ -61,14 +61,13 @@ class LocalClient:
         denominator = np.linalg.det(self.A_local-self.A_uploadbuffer+self.lambda_ * np.identity(n=self.d))
         return np.log(numerator/denominator)*(self.numObs_uploadbuffer) >= threshold
 
-class DisLinUCB:
-    def __init__(self, dimension, alpha, lambda_, delta_, NoiseScale, threshold):
+class NIndepLinUCB:
+    def __init__(self, dimension, alpha, lambda_, delta_, NoiseScale):
         self.dimension = dimension
         self.alpha = alpha
         self.lambda_ = lambda_
         self.delta_ = delta_
         self.NoiseScale = NoiseScale
-        self.threshold = threshold
         self.CanEstimateUserPreference = True
 
         self.clients = {}
@@ -99,30 +98,9 @@ class DisLinUCB:
     def updateParameters(self, articlePicked, click, currentClientID):
         # update local ss, and upload buffer
         self.clients[currentClientID].localUpdate(articlePicked.featureVector, click)
-
-        if self.clients[currentClientID].syncRoundTriggered(self.threshold):
-            # a round of global synchronization is triggered
-            # first collect the local updates of all the clients
-            for clientID, clientModel in self.clients.items():
-                self.totalCommCost += 1
-                # self.totalCommCost += (self.dimension**2 + self.dimension)
-                # update server's aggregated ss
-                self.A_aggregated += clientModel.A_uploadbuffer
-                self.b_aggregated += clientModel.b_uploadbuffer
-                self.numObs_aggregated += clientModel.numObs_uploadbuffer
-
-                # clear client's upload buffer
-                clientModel.A_uploadbuffer = np.zeros((self.dimension, self.dimension))
-                clientModel.b_uploadbuffer = np.zeros(self.dimension)
-                clientModel.numObs_uploadbuffer = 0
-
-            # then send the aggregated ss to all the clients, now all of them are synced
-            for clientID, clientModel in self.clients.items():
-                self.totalCommCost += 1
-                # self.totalCommCost += (self.dimension**2 + self.dimension)
-                clientModel.A_local = copy.deepcopy(self.A_aggregated)
-                clientModel.b_local = copy.deepcopy(self.b_aggregated)
-                clientModel.numObs_local = copy.deepcopy(self.numObs_aggregated)
+        
+        # no communication or sharinng of statistics
+        self.totalCommCost+=0
 
     def getTheta(self, clientID):
         return self.clients[clientID].UserTheta
