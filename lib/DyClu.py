@@ -93,9 +93,9 @@ class localUserModel:
     def getInstantaneousBadness(self, articlePicked, click, method="ChiSquare"):
         # compute badness on (articlePicked, click)
         if method == "ConfidenceBound":  # This is the test statistic used in dLinUCB
-            mean = np.dot(self.UserTheta, articlePicked.contextFeatureVector[:self.d])
+            mean = np.dot(self.UserTheta, articlePicked.featureVector[:self.d])
             rewardEstimationError = np.abs(mean - click)
-            if rewardEstimationError <= self.getCB(articlePicked.contextFeatureVector[:self.d]) + self.eta:
+            if rewardEstimationError <= self.getCB(articlePicked.featureVector[:self.d]) + self.eta:
                 e = 0
             else:
                 e = 1
@@ -103,7 +103,7 @@ class localUserModel:
             if self.rank < self.d:
                 e = 0
             else:
-                x = articlePicked.contextFeatureVector[:self.d]
+                x = articlePicked.featureVector[:self.d]
                 if self.rank < self.d:
                     e = 0
                 else:
@@ -210,6 +210,7 @@ class DyClu:
         self.global_time = 0      # keep track of total iterations
         self.CanEstimateUserPreference = True
         self.CanEstimateUserCluster = True
+        self.totalCommCost=0
 
     def decide(self, pool_articles, userID):
         # 1. Observe user and arm pool
@@ -241,7 +242,7 @@ class DyClu:
         maxPTA = float('-inf')
         articlePicked = None
         for arm_index in range(len(pool_articles)):
-            mean = np.dot(clusterTheta, pool_articles[arm_index].contextFeatureVector[:self.dimension])
+            mean = np.dot(clusterTheta, pool_articles[arm_index].featureVector[:self.dimension])
             arm_pta = mean + clusterCBsOnArmPool[arm_index]
             # pick article with highest Prob
             if maxPTA < arm_pta:
@@ -263,7 +264,7 @@ class DyClu:
         if e == 0:  # if model is admissible for this observation
             # 3. User model Update
             # Update current user's parameter estimation stats and cluster estimation stats
-            self.users[userID].updateLocalUserModel(articlePicked.contextFeatureVector[:self.dimension], click)
+            self.users[userID].updateLocalUserModel(articlePicked.featureVector[:self.dimension], click)
             self.resetUserConnectedness(userID)
             # 4. Cluster structure Update
             self.updateUserConnectedness(userID)
@@ -310,11 +311,11 @@ class DyClu:
                 clusterCB_x = []
                 if self.useOutdated:
                     for neighborUser in cluster+cluster_out:
-                        clusterCB_x.append(neighborUser.getCB(x.contextFeatureVector[:self.dimension]))
+                        clusterCB_x.append(neighborUser.getCB(x.featureVector[:self.dimension]))
                     assert len(clusterCB_x) == len(cluster)+len(cluster_out)
                 else:
                     for neighborUser in cluster:
-                        clusterCB_x.append(neighborUser.getCB(x.contextFeatureVector[:self.dimension]))
+                        clusterCB_x.append(neighborUser.getCB(x.featureVector[:self.dimension]))
                     assert len(clusterCB_x) == len(cluster)
                 clusterCB.append(np.mean(clusterCB_x))
             assert len(clusterCB) == len(pool_articles)
@@ -327,7 +328,7 @@ class DyClu:
             assert clusterTheta.shape == (self.dimension,)
             clusterCB = []
             for x in pool_articles:
-                clusterCB.append(aggregatedModel.getCB(x.contextFeatureVector[:self.dimension]))
+                clusterCB.append(aggregatedModel.getCB(x.featureVector[:self.dimension]))
             assert len(clusterCB) == len(pool_articles)
         return cluster, clusterTheta, clusterCB
 

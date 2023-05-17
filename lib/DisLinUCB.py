@@ -99,7 +99,7 @@ class DisLinUCB:
     def updateParameters(self, articlePicked, click, currentClientID):
         # update local ss, and upload buffer
         self.clients[currentClientID].localUpdate(articlePicked.featureVector, click)
-
+        
         if self.clients[currentClientID].syncRoundTriggered(self.threshold):
             # a round of global synchronization is triggered
             # first collect the local updates of all the clients

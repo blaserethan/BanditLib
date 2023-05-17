@@ -1,7 +1,7 @@
 import numpy as np
 from util_functions import vectorize
 from Recommendation import Recommendation
-from BaseAlg import BaseAlg
+from lib.BaseAlg import BaseAlg
 
 class LinUCBUserStruct:
 	def __init__(self, featureDimension, lambda_, init="zero"):

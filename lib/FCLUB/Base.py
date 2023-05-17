@@ -53,14 +53,12 @@ class Cluster(User):
         return self.users[user_index]
 
     # ksi_noise and B_noise are LDP noise parameter, in our experiment we don't add it
-    def store_info(self, x, y, t, r, br, ksi_noise, B_noise):
+    def store_info(self, x, y, t):
         # self.V = self.V + np.outer(x, x) + B_noise
         self.V = self.V + np.outer(x, x)
         # self.b = self.b + y * x + ksi_noise
         self.b = self.b + y * x
         self.t += 1
-        self.best_rewards[t] += br
-        self.rewards[t] += r
         self.theta = np.matmul(np.linalg.inv(np.eye(self.d) + self.V), self.b)
 
     def get_info(self):
@@ -109,14 +107,12 @@ class DC_Cluster(User):
         return self.users[user_index]
 
     # update upload buffer
-    def store_info(self, x, y, t, r, br, ksi_noise, B_noise):
+    def store_info(self, x, y, t):
         # self.V = self.V + np.outer(x, x) + B_noise
         self.S_up += np.outer(x, x)
         # self.b = self.b + y * x + ksi_noise
         self.u_up += y * x
         self.T_up += 1
-        self.best_rewards[t] += br
-        self.rewards[t] += r
         self.theta = np.matmul(np.linalg.inv(np.eye(self.d) + self.S), self.u)
 
     def get_info(self):
